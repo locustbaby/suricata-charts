@@ -1,0 +1,17 @@
+{{- if .Values.exporter.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "suricata.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "suricata.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "suricata.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+{{- end }}

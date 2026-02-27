@@ -1,0 +1,18 @@
+apiVersion: v2
+name: suricata
+version: 0.1.0
+appVersion: "8.0.1"
+description: Suricata IDS/IPS DaemonSet for Kubernetes network intrusion detection
+type: application
+keywords:
+  - suricata
+  - ids
+  - ips
+  - security
+  - intrusion-detection
+  - network-security
+home: https://suricata.io
+sources:
+  - https://github.com/OISF/suricata
+maintainers:
+  - name: maintainer

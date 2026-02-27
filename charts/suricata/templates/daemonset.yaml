@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "suricata.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "suricata.labels" . | nindent 4 }}
+spec:
+  updateStrategy:
+    {{- toYaml .Values.updateStrategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "suricata.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "suricata.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/rules: {{ include (print $.Template.BasePath "/configmap-rules.yaml") . | sha256sum }}
+    spec:
+      hostNetwork: {{ .Values.hostNetwork }}
+      hostPID: {{ .Values.hostPID }}
+      dnsPolicy: ClusterFirst
+      terminationGracePeriodSeconds: 30
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: suricata
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "-i"
+            - "{{ .Values.interface }}"
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_NICE
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: suricata-config
+              mountPath: /etc/suricata
+            - name: suricata-rules
+              mountPath: /var/lib/suricata/rules
+            - name: log
+              mountPath: /var/log/suricata
+            - name: suricata-socket
+              mountPath: /suricata-socket
+        {{- if .Values.exporter.enabled }}
+        - name: suricata-exporter
+          image: "{{ .Values.exporter.image.repository }}:{{ .Values.exporter.image.tag }}"
+          imagePullPolicy: {{ .Values.exporter.image.pullPolicy }}
+          securityContext:
+            runAsUser: 0
+          args:
+            - "-suricata.socket-path"
+            - "/suricata-socket/suricata-command.socket"
+            - "-web.listen-address"
+            - ":{{ .Values.exporter.port }}"
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.exporter.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: suricata-socket
+              mountPath: /suricata-socket
+          {{- with .Values.exporter.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      volumes:
+        - name: suricata-config
+          configMap:
+            name: {{ include "suricata.fullname" . }}-config
+        - name: suricata-rules
+          configMap:
+            name: {{ include "suricata.fullname" . }}-rules
+        - name: log
+          hostPath:
+            path: /var/log/suricata
+            type: DirectoryOrCreate
+        - name: suricata-socket
+          hostPath:
+            path: /var/run/suricata-socket
+            type: DirectoryOrCreate
