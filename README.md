@@ -1,6 +1,6 @@
 # Suricata Helm Chart
 
-Helm chart for deploying [Suricata](https://suricata.io) as a DaemonSet on Kubernetes gateway nodes, with built-in Prometheus metrics exporter and Grafana dashboard.
+Helm chart for deploying [Suricata](https://suricata.io) as a DaemonSet on Kubernetes, with built-in Prometheus metrics exporter and Grafana dashboard.
 
 ## Features
 
@@ -15,7 +15,6 @@ Helm chart for deploying [Suricata](https://suricata.io) as a DaemonSet on Kuber
 
 - Kubernetes 1.19+
 - Helm 3
-- Nodes labeled with `node-role/gateway: "true"`
 - (Optional) Prometheus Operator for PodMonitor
 - You need to build the [suricata_exporter](https://github.com/corelight/suricata_exporter) image yourself as no public image is available
 
@@ -36,7 +35,7 @@ helm install suricata ./charts/suricata \
 | `image.tag` | Suricata image tag | `8.0.1` |
 | `interface` | Network interface to monitor | `eth0` |
 | `hostNetwork` | Enable host networking | `true` |
-| `nodeSelector` | Node selector | `node-role/gateway: "true"` |
+| `nodeSelector` | Node selector | `{}` |
 | `tolerations` | Pod tolerations | `[{operator: Exists}]` |
 | `resources` | Suricata container resources | 500m-2000m CPU, 1-4Gi memory |
 | `evelog.output` | Eve log output (`stdout` or `redis`) | `stdout` |
@@ -60,7 +59,9 @@ The two containers share the socket directory via a hostPath volume at `/var/run
 
 ## Grafana Dashboard
 
-Import `charts/suricata/grafana-dashboard.json` into Grafana for a pre-built Suricata monitoring dashboard.
+Import `dashboards/grafana-dashboard.json` into Grafana for a pre-built Suricata monitoring dashboard.
+
+![Grafana Dashboard](docs/screenshot-20260228-103727.png)
 
 ## License
 

@@ -11,8 +11,7 @@ interface: eth0
 hostNetwork: true
 hostPID: false
 
-nodeSelector:
-  node-role/gateway: "true"
+nodeSelector: {}
 
 tolerations:
   - operator: Exists
